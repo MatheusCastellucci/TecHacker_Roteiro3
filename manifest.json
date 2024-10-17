@@ -1,0 +1,36 @@
+{
+  "manifest_version": 2,
+  "name": "Privacy Monitor",
+  "version": "1.0",
+  "description": "Firefox extension made for the Tecnologias Hacker course at Insper",
+  "icons": {
+    "48": "icon/icon.png"
+  },
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "browser_action": {
+    "default_icon": "icon/icon.png",
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+    "tabs",
+    "http://*/*",
+    "https://*/*",
+    "browserSettings",
+    "notifications",
+    "activeTab",
+    "webRequest",
+    "webRequestBlocking",
+    "<all_urls>",
+    "cookies",
+    "storage"
+  ]
+}

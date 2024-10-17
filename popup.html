@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="popup.css">
+    <title>Web Privacy Plugin</title>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Privacy Insights</h1>
+        <p id="description">Monitoring active for current website.</p>
+        
+        <div class="card">
+            <h2>Website Info</h2>
+            <p id="tab-domain"></p>
+            <p id="privacy-score"></p>
+        </div>
+
+        <div class="card">
+            <h2>Third-Party Connections</h2>
+            <p class="info-text">Download a list of third-party connections.</p>
+            <button id="get-urls">Download URLs Log</button>
+            <ul id="urls-list"></ul>
+        </div>
+
+        <div class="card">
+            <h2>Cookies</h2>
+            <button id="check-cookies">Analyze Cookies</button>
+            <div id="cookies-info">
+                <p id="session-count"></p>
+                <p id="first-party-count"></p>
+                <p id="third-party-count"></p>
+                <p id="persistent-count"></p>
+                <p id="total-count"></p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Cookies Syncing</h2>
+            <button id="sync-cookies">Detect Cookie Syncing</button>
+            <div id="sync-cookies-status"></div>
+        </div>
+
+        <div class="card">
+            <h2>Local Storage</h2>
+            <button id="check-localStorage">Check Local Storage</button>
+            <div id="localStorage-status"></div>
+            <ul id="localStorage-data"></ul>
+        </div>
+
+        <button id="clear" class="clear-btn">Clear Logs</button>
+    </div>
+    
+    <script src="popup.js"></script>
+</body>
+</html>
