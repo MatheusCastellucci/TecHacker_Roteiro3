@@ -33,9 +33,9 @@ function handleUrlsResponse(message) {
     const tempLink = document.createElement('a');
     tempLink.href = blobURL;
     tempLink.download = 'urls.txt';
-    document.body.appendChild(tempLink);  // Adiciona temporariamente o link ao documento
-    tempLink.click();                     // Clica programaticamente no link para acionar o download
-    document.body.removeChild(tempLink);  // Remove o link do documento
+    document.body.appendChild(tempLink);
+    tempLink.click();
+    document.body.removeChild(tempLink);
   } else {
     const p = document.createElement('p');
     p.textContent = "Não foi possível recuperar as URLs de Terceiros.";
@@ -85,7 +85,9 @@ function countCookies(cookies, domain) {
 // Detecta sincronização de cookies
 function detectSyncronism(cookies) {
   const cookieMap = new Map();
+  let syncDetected = false;
 
+  // Mapeia os cookies e seus domínios
   cookies.forEach(cookie => {
     if (cookieMap.has(cookie.value)) {
       cookieMap.get(cookie.value).push(cookie.domain);
@@ -94,15 +96,39 @@ function detectSyncronism(cookies) {
     }
   });
 
+  // Verifica se há sincronismo de cookies
   for (const [value, domains] of cookieMap.entries()) {
     if (domains.length > 1) {
       document.getElementById("sync-cookies-status").textContent = `Possible syncing of ${value} between these domains: ${domains.join(", ")}`;
+      syncDetected = true;
+      break; // Interrompe o loop ao encontrar o primeiro sincronismo
     }
-    else {
-      document.getElementById("sync-cookies-status").textContent = "No syncing detected.";
-    }''
+  }
+
+  // Se nenhum sincronismo foi encontrado
+  if (!syncDetected) {
+    document.getElementById("sync-cookies-status").textContent = "No syncing detected.";
   }
 }
+
+// Verifica Canvas Fingerprinting
+document.getElementById("check-canvas").addEventListener('click', function() {
+  browser.runtime.sendMessage({ action: "getCanvasFingerprintData" })
+    .then(message => {
+      const canvasStatusElement = document.getElementById("canvas-fingerprint-status");
+      if (message && message.data && message.data.length > 0) {
+        const detections = message.data.map(item => `Method: ${item.method}, URL: ${item.url}`).join("\n");
+        canvasStatusElement.textContent = `Canvas Fingerprinting Detected:\n${detections}`;
+      } else {
+        canvasStatusElement.textContent = "No Canvas Fingerprinting detected.";
+      }
+    })
+    .catch(error => {
+      console.error("Erro ao verificar Canvas Fingerprinting:", error);
+      document.getElementById("canvas-fingerprint-status").textContent = "Erro ao verificar Canvas Fingerprinting.";
+    });
+});
+
 
 // Limpa os logs da interface
 function clearLogs() {
@@ -114,7 +140,8 @@ function clearLogs() {
   document.getElementById("total-count").textContent = "";
   document.getElementById("localStorage-status").textContent = "";
   document.getElementById("localStorage-data").textContent = "";
-  document.getElementById("sync-cookies-status").textContent = "";
+  document.getElementById("sync-cookies-status").textContent = "No syncing detected.";
+  document.getElementById("canvas-fingerprint-status").textContent = "No Canvas Fingerprinting detected.";
 }
 
 // Manipulador de evento principal

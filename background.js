@@ -1,5 +1,6 @@
 // Array para armazenar URLs de terceiros
 let thirdPartyRequests = [];
+let canvasFingerprintingDetected = [];
 
 // Função para lidar com requisições feitas pelo navegador
 const detectarConexoesDeTerceiraParte = requestDetails => {
@@ -13,7 +14,7 @@ const detectarConexoesDeTerceiraParte = requestDetails => {
 
     // Verifica se a requisição é de terceiros, comparando os hostnames
     if (sourceUrl.hostname !== targetUrl.hostname) {
-      console.log("%cConexão a dominínio de terceira parte detectada:", 'color: purple;', requestDetails.url);
+      console.log("%cConexão a domínio de terceira parte detectada:", 'color: purple;', requestDetails.url);
       thirdPartyRequests.push(requestDetails.url); // Armazena a URL de terceiro detectada
     }
 
@@ -71,7 +72,6 @@ const detectarArmazenamentoLocal = async tabId => {
   }
 };
 
-
 // Função para calcular a pontuação de privacidade de uma página
 async function calculoPontuacaoSeguranca(tabId, tabUrl) {
   try {
@@ -86,7 +86,8 @@ async function calculoPontuacaoSeguranca(tabId, tabUrl) {
       thirdPartyUrls: 0.25,
       thirdPartyCookies: 3,
       firstPartyCookies: 1,
-      localStorage: 1.5
+      localStorage: 1.5,
+      canvasFingerprinting: 5
     };
   
     let score = 0;
@@ -94,6 +95,7 @@ async function calculoPontuacaoSeguranca(tabId, tabUrl) {
     score += WEIGHTS.thirdPartyCookies * thirdPartyCookies.length;
     score += WEIGHTS.firstPartyCookies * firstPartyCookies.length;
     score += WEIGHTS.localStorage * (localStorageData.storageAvailable ? localStorageData.keys.length : 0);
+    score += WEIGHTS.canvasFingerprinting * canvasFingerprintingDetected.length;
   
     const scaledScore = (score / 500) * 100;
     const invertedScore = 100 - scaledScore;
@@ -105,6 +107,15 @@ async function calculoPontuacaoSeguranca(tabId, tabUrl) {
   }
 }
 
+// Função para injetar o script de fingerprinting
+const injectCanvasFingerprintingScript = tabId => {
+  browser.tabs.executeScript(tabId, { file: "detectCanvasFingerprint.js" })
+    .then(() => {
+      console.log("[Background] Script de canvas fingerprinting injetado na aba:", tabId);
+    })
+    .catch(err => console.error("[Background] Erro ao injetar script de canvas fingerprinting:", err));
+};
+
 // Listener para monitorar requisições de cabeçalho
 browser.webRequest.onBeforeSendHeaders.addListener(
   detectarConexoesDeTerceiraParte,
@@ -112,11 +123,26 @@ browser.webRequest.onBeforeSendHeaders.addListener(
   ["requestHeaders"]
 );
 
+// Listener para injetar o script de Canvas Fingerprinting
+// Listener para injetar o script de Canvas Fingerprinting
+browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === "complete" && /^http/.test(tab.url)) {
+    console.log(`[Injeção de Script] Tentando injetar script de Canvas Fingerprinting na aba com URL: ${tab.url}`);
+    browser.tabs.executeScript(tabId, {
+      file: "detectCanvasFingerprint.js"
+    }).then(() => {
+      console.log("[Injeção de Script] Script de Canvas Fingerprinting injetado com sucesso.");
+    }).catch((error) => {
+      console.error("[Erro] Falha ao injetar script de Canvas Fingerprinting:", error);
+    });
+  }
+});
+
+
 // Listener para lidar com mensagens recebidas pelo runtime
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log("Mensagem recebida no background.js:", message); // Adicione este log para depurar
   switch(message.action) {
-
 
     case "getThirdPartyUrls":
       const distinctUrls = [...new Set(thirdPartyRequests)];
@@ -126,7 +152,6 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         thirdPartyRequests = [];
       }, 100); // Limpa o array após um curto período para garantir que a resposta foi enviada
       break;
-
 
     case "getCookieCount":
       console.log("%c[COOKIES] Contagem de cookies para o domínio:", 'color: green;', message.domain);
@@ -138,13 +163,11 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
       return true;
 
-
     case "checkLocalStorage":
       console.log("%c[LocalStorage] Verificando LocalStorage para tabId:", 'color: green;', message.tabId);
       detectarArmazenamentoLocal(message.tabId).then(localStorageInfo => sendResponse(localStorageInfo));
       return true;
 
-      
     case "getPrivacyScore":
       console.log("Calculando pontuação de privacidade para tabUrl:", message.tabUrl);
       calculoPontuacaoSeguranca(message.tabId, message.tabUrl).then(privacyScore => {
@@ -152,6 +175,17 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ privacyScore });
       });
       return true;
+
+    case "canvasFingerprintDetected":
+      console.log(`[Background] Canvas fingerprinting detectado via ${message.method} em ${message.url}`);
+      sendResponse({ status: "detected" });
+      canvasFingerprintingDetected.push({ method: message.method, url: message.url });
+      break;
+
+    case "getCanvasFingerprintData":
+      console.log("[Background] Enviando dados de fingerprint para popup");
+      sendResponse({ data: canvasFingerprintingDetected });
+      break;
 
     default:
       console.error("Ação desconhecida recebida:", message.action);

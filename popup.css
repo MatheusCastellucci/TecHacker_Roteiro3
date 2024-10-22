@@ -100,3 +100,9 @@ ul li {
 #cookies-info p {
   margin: 5px 0;
 }
+
+#canvas-fingerprint-status {
+  margin-top: 10px;
+  font-size: 0.95em;
+  color: #d9534f; /* vermelho suave para indicar possíveis problemas */
+}
