@@ -41,6 +41,10 @@ A sincronização de cookies é uma prática utilizada por empresas de publicida
 ## 3.5. Privacy Score
 A extensão também calcula um "Privacy Score" para cada domínio visitado. Esse score fornece ao usuário uma visão clara sobre o nível de rastreamento e coleta de dados que está ocorrendo em cada site, facilitando a compreensão das práticas de privacidade.
 
+## 3.6. Canvas Fingerprinting
+A extensão também vasculha o site atrás de elementos `<Canvas>` e verifica se o site está tentando fazer fingerprinting do usuário.
+
+
 # 4. Referências Utilizadas
 - https://developer.mozilla.org/pt-BR/docs/Mozilla/Add-ons/WebExtensions/Your_second_WebExtension
 - https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Work_with_the_Cookies_API
